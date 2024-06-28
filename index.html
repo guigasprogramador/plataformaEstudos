@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Estudos</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+</head>
+<body>
+    <!-- Barra de Navegação -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Registro de Estudos</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+            <form class="form-inline my-2 my-lg-0" id="searchForm">
+                <input class="form-control mr-sm-2" type="search" placeholder="Pesquisar" aria-label="Pesquisar" id="searchQuery">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Pesquisar</button>
+            </form>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1>Registro de Estudos</h1>
+        <form action="processa_registro.php" method="post">
+            <div class="form-group">
+                <label for="materia">Matéria Estudada</label>
+                <input type="text" class="form-control" id="materia" name="materia" required>
+            </div>
+            <div class="form-group">
+                <label for="questoes_feitas">Quantidade de Questões Feitas</label>
+                <input type="number" class="form-control" id="questoes_feitas" name="questoes_feitas" required>
+            </div>
+            <div class="form-group">
+                <label for="questoes_erradas">Quantidade de Questões Erradas</label>
+                <input type="number" class="form-control" id="questoes_erradas" name="questoes_erradas" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Registrar</button>
+        </form>
+
+        <!-- Resultados da Pesquisa -->
+        <div class="mt-5" id="searchResults"></div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Editar Registro</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="editId">
+                        <div class="form-group">
+                            <label for="editMateria">Matéria Estudada</label>
+                            <input type="text" class="form-control" id="editMateria" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editQuestoesFeitas">Quantidade de Questões Feitas</label>
+                            <input type="number" class="form-control" id="editQuestoesFeitas" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editQuestoesErradas">Quantidade de Questões Erradas</label>
+                            <input type="number" class="form-control" id="editQuestoesErradas" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Função de Pesquisa
+            $("#searchForm").submit(function(event) {
+                event.preventDefault();
+                var query = $("#searchQuery").val();
+                $.ajax({
+                    url: "pesquisa.php",
+                    type: "GET",
+                    data: { search: query },
+                    success: function(data) {
+                        $("#searchResults").html(data);
+                    }
+                });
+            });
+
+            // Função de Edição
+            $("#editForm").submit(function(event) {
+                event.preventDefault();
+                var id = $("#editId").val();
+                var materia = $("#editMateria").val();
+                var questoes_feitas = $("#editQuestoesFeitas").val();
+                var questoes_erradas = $("#editQuestoesErradas").val();
+
+                $.ajax({
+                    url: "editar.php",
+                    type: "POST",
+                    data: {
+                        id: id,
+                        materia: materia,
+                        questoes_feitas: questoes_feitas,
+                        questoes_erradas: questoes_erradas
+                    },
+                    success: function(data) {
+                        $("#editModal").modal('hide');
+                        alert("Registro atualizado com sucesso!");
+                        $("#searchForm").submit();
+                    }
+                });
+            });
+
+            // Abre o modal de edição com os dados do registro
+            $(document).on("click", ".editBtn", function() {
+                var id = $(this).data("id");
+                var materia = $(this).data("materia");
+                var questoes_feitas = $(this).data("questoes_feitas");
+                var questoes_erradas = $(this).data("questoes_erradas");
+
+                $("#editId").val(id);
+                $("#editMateria").val(materia);
+                $("#editQuestoesFeitas").val(questoes_feitas);
+                $("#editQuestoesErradas").val(questoes_erradas);
+
+                $("#editModal").modal("show");
+            });
+
+            // Função de Exclusão
+            $(document).on("click", ".deleteBtn", function() {
+                if (confirm("Tem certeza que deseja excluir este registro?")) {
+                    var id = $(this).data("id");
+
+                    $.ajax({
+                        url: "excluir.php",
+                        type: "POST",
+                        data: { id: id },
+                        success: function(data) {
+                            alert("Registro excluído com sucesso!");
+                            $("#searchForm").submit();
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
